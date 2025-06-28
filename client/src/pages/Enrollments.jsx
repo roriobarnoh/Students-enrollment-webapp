@@ -5,8 +5,14 @@ export default function Enrollments() {
   const [enrollments, setEnrollments] = useState([]);
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+
     axios
-      .get("http://localhost:5000/enrollments")
+      .get("http://localhost:5555/enrollments", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       .then((response) => setEnrollments(response.data))
       .catch((error) => console.error("Error fetching enrollments:", error));
   }, []);
@@ -18,7 +24,14 @@ export default function Enrollments() {
         <ul className="list-group">
           {enrollments.map((enrollment) => (
             <li key={enrollment.id} className="list-group-item">
-              Student <strong>{enrollment.student?.name}</strong> enrolled in Unit <strong>{enrollment.unit?.title}</strong>
+              Student <strong>{enrollment.student?.name}</strong> enrolled in Unit{" "}
+              <strong>{enrollment.unit?.title}</strong> on{" "}
+              <em>{new Date(enrollment.enrollment_date).toLocaleDateString()}</em>
+              {enrollment.grades !== null && (
+                <>
+                  {" "}with Grade: <strong>{enrollment.grades}</strong>
+                </>
+              )}
             </li>
           ))}
         </ul>

@@ -7,14 +7,19 @@ export default function EditStudentForm({ student, setStudents, onClose }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const token = localStorage.getItem("token");
 
     axios
-      .patch(`http://localhost:5555/students/${student.id}`, {
-        name,
-        age,
-      })
+      .patch(
+        `http://localhost:5555/students/${student.id}`,
+        { name, age },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
       .then((response) => {
-        // Update local student state
         setStudents((prev) =>
           prev.map((s) => (s.id === student.id ? response.data : s))
         );

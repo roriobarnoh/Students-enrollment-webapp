@@ -11,16 +11,19 @@ export default function Students() {
   const [enrollments, setEnrollments] = useState({});
   const [showAddModal, setShowAddModal] = useState(false);
 
+  const token = localStorage.getItem("token");
+  const authHeaders = { headers: { Authorization: `Bearer ${token}` } };
+
   const fetchStudents = () => {
     axios
-      .get("http://localhost:5000/students")
+      .get("http://localhost:5555/students", authHeaders)
       .then((res) => setStudents(res.data))
       .catch((err) => console.error("Error fetching students:", err));
   };
 
   const fetchEnrollments = (studentId) => {
     axios
-      .get("http://localhost:5000/enrollments")
+      .get("http://localhost:5555/enrollments", authHeaders)
       .then((res) => {
         const filtered = res.data.filter(
           (enrollment) => enrollment.student_id === studentId
@@ -33,7 +36,7 @@ export default function Students() {
   const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete this student?")) {
       axios
-        .delete(`http://localhost:5000/students/${id}`)
+        .delete(`http://localhost:5555/students/${id}`, authHeaders)
         .then(() => fetchStudents())
         .catch((err) => console.error("Error deleting student:", err));
     }
@@ -126,8 +129,8 @@ export default function Students() {
                 <EnrollStudentForm
                   student={enrollingStudent}
                   onClose={() => {
-                    setEnrollingStudent(null);
                     fetchEnrollments(enrollingStudent.id);
+                    setEnrollingStudent(null);
                   }}
                 />
               </div>
@@ -169,9 +172,7 @@ export default function Students() {
                   <td>
                     <button
                       className="btn btn-sm btn-warning me-2"
-                      onClick={() => {
-                        setEditingStudent(student);
-                      }}
+                      onClick={() => setEditingStudent(student)}
                     >
                       Edit
                     </button>

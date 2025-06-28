@@ -1,47 +1,64 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 
 export default function EnrollStudentForm({ student, onClose }) {
-  const [unitId, setUnitId] = useState("");
   const [units, setUnits] = useState([]);
+  const [unitId, setUnitId] = useState("");
   const [enrollmentDate, setEnrollmentDate] = useState("");
+  const [grades, setGrades] = useState("");
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+
     axios
-      .get("http://localhost:5000/units")
-      .then((response) => setUnits(response.data))
-      .catch((error) => console.error("Error fetching units:", error));
+      .get("http://localhost:5555/units", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => setUnits(res.data))
+      .catch((err) => console.error("Error fetching units:", err));
   }, []);
 
-  const handleEnroll = () => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
     if (!unitId || !enrollmentDate) {
-      alert("Please select a unit and provide an enrollment date.");
+      alert("Please select a unit and date.");
       return;
     }
 
+    const token = localStorage.getItem("token");
+
     axios
-      .post("http://localhost:5000/enrollments", {
-        student_id: student.id,
-        unit_id: parseInt(unitId),
-        enrollment_date: enrollmentDate,
-      })
+      .post(
+        "http://localhost:5555/enrollments",
+        {
+          student_id: student.id,
+          unit_id: unitId,
+          enrollment_date: enrollmentDate,
+          grades: grades ? parseFloat(grades) : null,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
       .then(() => {
-        alert("Student enrolled successfully!");
         onClose();
       })
-      .catch((error) => console.error("Error enrolling student:", error));
+      .catch((err) => console.error("Error enrolling student:", err));
   };
 
   return (
-    <div className="p-4 bg-light rounded shadow-sm">
-      <h4 className="mb-3">Enroll {student.name}</h4>
-
+    <form onSubmit={handleSubmit}>
       <div className="mb-3">
-        <label className="form-label">Select a Unit:</label>
+        <label className="form-label">Select Unit</label>
         <select
           className="form-select"
           value={unitId}
           onChange={(e) => setUnitId(e.target.value)}
+          required
         >
           <option value="">-- Select a Unit --</option>
           {units.map((unit) => (
@@ -53,7 +70,7 @@ export default function EnrollStudentForm({ student, onClose }) {
       </div>
 
       <div className="mb-3">
-        <label className="form-label">Enrollment Date:</label>
+        <label className="form-label">Enrollment Date</label>
         <input
           type="date"
           className="form-control"
@@ -63,14 +80,25 @@ export default function EnrollStudentForm({ student, onClose }) {
         />
       </div>
 
-      <div className="d-flex justify-content-end gap-2">
-        <button className="btn btn-success" onClick={handleEnroll}>
-          Enroll
-        </button>
-        <button className="btn btn-secondary" onClick={onClose}>
+      <div className="mb-3">
+        <label className="form-label">Grade (Optional)</label>
+        <input
+          type="number"
+          className="form-control"
+          value={grades}
+          onChange={(e) => setGrades(e.target.value)}
+          step="0.01"
+        />
+      </div>
+
+      <div className="d-flex justify-content-end">
+        <button type="button" className="btn btn-secondary me-2" onClick={onClose}>
           Cancel
         </button>
+        <button type="submit" className="btn btn-primary">
+          Enroll
+        </button>
       </div>
-    </div>
+    </form>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import axiosWithAuth from "../utils/axiosWithAuth"; // uses token from localStorage
 
 export default function StudentForm({ setStudents }) {
   const [name, setName] = useState("");
@@ -13,12 +13,13 @@ export default function StudentForm({ setStudents }) {
     const newStudent = { name, age: Number(age) };
 
     try {
-      const response = await axios.post("http://localhost:5000/students", newStudent);
+      const response = await axiosWithAuth().post("/students", newStudent);
       setStudents((prev) => [...prev, response.data]);
       setName("");
       setAge("");
     } catch (error) {
       console.error("Error adding student:", error);
+      alert("You must be logged in to add a student.");
     } finally {
       setIsSaving(false);
     }
