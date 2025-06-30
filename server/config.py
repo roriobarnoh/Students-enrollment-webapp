@@ -13,7 +13,6 @@ from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
 from extentions import bcrypt, jwt
-import os   
 
 
 # Local 
@@ -21,9 +20,7 @@ load_dotenv()
 
 # Instantiate app, set attributes
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("FLASK_SQLALCHEMY_DATABASE_URI")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = os.environ.get("FLASK_SQLALCHEMY_TRACK_MODIFICATIONS", False)
-app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY")
+app.config.from_prefixed_env(prefix='FLASK')
 app.json.compact = False
 
 # Define metadata, instantiate db
