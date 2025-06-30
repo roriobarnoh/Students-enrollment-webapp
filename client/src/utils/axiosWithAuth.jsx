@@ -7,6 +7,7 @@ const axiosWithAuth = () => {
     baseURL: "http://localhost:5555",
     headers: {
       Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
   });
 };

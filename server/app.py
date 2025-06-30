@@ -196,6 +196,67 @@ class UnitsResource(Resource):
         units = Unit.query.all()
         return [unit.to_dict() for unit in units]
 
+    @jwt_required()
+    def post(self):
+        data = request.get_json()
+        title = data.get("title")
+        instructor_id = data.get("instructor_id")
+
+        if not title:
+            return {"error": "Title is required"}, 400
+
+        if instructor_id:
+            instructor = Instructor.query.get(instructor_id)
+            if not instructor:
+                return {"error": "Instructor not found"}, 404
+
+        new_unit = Unit(title=title, instructor_id=instructor_id)
+        db.session.add(new_unit)
+        db.session.commit()
+        return new_unit.to_dict(), 201
+    
+    # ==========================
+# 🚀 Unit by ID API
+# ==========================
+class UnitByIDResource(Resource):
+    @jwt_required()
+    def get(self, unit_id):
+        unit = Unit.query.get(unit_id)
+        if not unit:
+            return {"error": "Unit not found"}, 404
+        return unit.to_dict()
+
+    @jwt_required()
+    def patch(self, unit_id):
+        unit = Unit.query.get(unit_id)
+        if not unit:
+            return {"error": "Unit not found"}, 404
+
+        data = request.get_json()
+        unit.title = data.get("title", unit.title)
+        instructor_id = data.get("instructor_id")
+
+        if instructor_id:
+            instructor = Instructor.query.get(instructor_id)
+            if not instructor:
+                return {"error": "Instructor not found"}, 404
+            unit.instructor_id = instructor_id
+
+        db.session.commit()
+        return unit.to_dict(), 200
+
+    @jwt_required()
+    def delete(self, unit_id):
+        unit = Unit.query.get(unit_id)
+        if not unit:
+            return {"error": "Unit not found"}, 404
+
+        db.session.delete(unit)
+        db.session.commit()
+        return {"message": "Unit deleted successfully"}, 200
+
+
+
 
 # ==========================
 # 🚀 Instructors API
@@ -206,6 +267,70 @@ class InstructorsResource(Resource):
         instructors = Instructor.query.all()
         return [instructor.to_dict() for instructor in instructors]
 
+    @jwt_required()
+    def post(self):
+        data = request.get_json()
+        name = data.get("name")
+        email = data.get("email")
+        department_id = data.get("department_id")
+
+        if not name or not email or not department_id:
+            return {"error": "Name, email, and department are required."}, 400
+
+        department = Department.query.get(department_id)
+        if not department:
+            return {"error": "Department not found."}, 404
+
+        new_instructor = Instructor(name=name, email=email, department_id=department_id)
+        db.session.add(new_instructor)
+        db.session.commit()
+
+        return new_instructor.to_dict(), 201
+    
+
+    
+class InstructorByIDResource(Resource):
+    @jwt_required()
+    def get(self, instructor_id):
+        instructor = Instructor.query.get(instructor_id)
+        if not instructor:
+            return {"error": "Instructor not found."}, 404
+        return instructor.to_dict()
+
+    @jwt_required()
+    def patch(self, instructor_id):
+        instructor = Instructor.query.get(instructor_id)
+        if not instructor:
+            return {"error": "Instructor not found."}, 404
+
+        data = request.get_json()
+        name = data.get("name")
+        email = data.get("email")
+        department_id = data.get("department_id")
+
+        if name:
+            instructor.name = name
+        if email:
+            instructor.email = email
+        if department_id:
+            department = Department.query.get(department_id)
+            if not department:
+                return {"error": "Department not found."}, 404
+            instructor.department_id = department_id
+
+        db.session.commit()
+        return instructor.to_dict(), 200
+
+    @jwt_required()
+    def delete(self, instructor_id):
+        instructor = Instructor.query.get(instructor_id)
+        if not instructor:
+            return {"error": "Instructor not found."}, 404
+
+        db.session.delete(instructor)
+        db.session.commit()
+        return {"message": "Instructor deleted successfully."}, 200
+
 
 # ==========================
 # 🚀 Departments API
@@ -215,6 +340,58 @@ class DepartmentsResource(Resource):
     def get(self):
         departments = Department.query.all()
         return [department.to_dict() for department in departments]
+
+    @jwt_required()
+    def post(self):
+        data = request.get_json()
+        name = data.get("name")
+
+        if not name:
+            return {"error": "Department name is required."}, 400
+
+        # Check for duplicates
+        if Department.query.filter_by(name=name).first():
+            return {"error": "Department already exists."}, 409
+
+        new_department = Department(name=name)
+        db.session.add(new_department)
+        db.session.commit()
+
+        return new_department.to_dict(), 201
+    
+
+class DepartmentByIDResource(Resource):
+    @jwt_required()
+    def patch(self, department_id):
+        department = Department.query.get(department_id)
+        if not department:
+            return {"error": "Department not found."}, 404
+
+        data = request.get_json()
+        name = data.get("name")
+
+        if not name:
+            return {"error": "Department name is required."}, 400
+
+        existing = Department.query.filter(Department.name == name, Department.id != department_id).first()
+        if existing:
+            return {"error": "Another department with that name already exists."}, 409
+
+        department.name = name
+        db.session.commit()
+        return department.to_dict(), 200
+
+    @jwt_required()
+    def delete(self, department_id):
+        department = Department.query.get(department_id)
+        if not department:
+            return {"error": "Department not found."}, 404
+
+        db.session.delete(department)
+        db.session.commit()
+        return {"message": "Department deleted successfully."}, 200
+
+
 
 
 # ==========================
@@ -227,8 +404,11 @@ api.add_resource(StudentByIDResource, "/students/<int:student_id>")
 api.add_resource(EnrollmentsResource, "/enrollments")
 api.add_resource(EnrollmentByIDResource, "/enrollments/<int:enrollment_id>")
 api.add_resource(UnitsResource, "/units")
+api.add_resource(UnitByIDResource, "/units/<int:unit_id>")
 api.add_resource(InstructorsResource, "/instructors")
+api.add_resource(InstructorByIDResource, "/instructors/<int:instructor_id>")
 api.add_resource(DepartmentsResource, "/departments")
+api.add_resource(DepartmentByIDResource, "/departments/<int:department_id>")
 
 
 # ==========================

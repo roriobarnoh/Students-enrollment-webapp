@@ -21,14 +21,17 @@ export default function Students() {
       .catch((err) => console.error("Error fetching students:", err));
   };
 
-  const fetchEnrollments = (studentId) => {
+  const fetchAllEnrollments = () => {
     axios
       .get("http://localhost:5555/enrollments", authHeaders)
       .then((res) => {
-        const filtered = res.data.filter(
-          (enrollment) => enrollment.student_id === studentId
-        );
-        setEnrollments((prev) => ({ ...prev, [studentId]: filtered }));
+        const grouped = res.data.reduce((acc, enrollment) => {
+          const studentId = enrollment.student_id;
+          if (!acc[studentId]) acc[studentId] = [];
+          acc[studentId].push(enrollment);
+          return acc;
+        }, {});
+        setEnrollments(grouped);
       })
       .catch((err) => console.error("Error fetching enrollments:", err));
   };
@@ -37,13 +40,17 @@ export default function Students() {
     if (window.confirm("Are you sure you want to delete this student?")) {
       axios
         .delete(`http://localhost:5555/students/${id}`, authHeaders)
-        .then(() => fetchStudents())
+        .then(() => {
+          fetchStudents();
+          fetchAllEnrollments();
+        })
         .catch((err) => console.error("Error deleting student:", err));
     }
   };
 
   useEffect(() => {
     fetchStudents();
+    fetchAllEnrollments();
   }, []);
 
   return (
@@ -76,6 +83,7 @@ export default function Students() {
                   onClose={() => {
                     setShowAddModal(false);
                     fetchStudents();
+                    fetchAllEnrollments();
                   }}
                 />
               </div>
@@ -104,6 +112,7 @@ export default function Students() {
                   onClose={() => {
                     setEditingStudent(null);
                     fetchStudents();
+                    fetchAllEnrollments();
                   }}
                 />
               </div>
@@ -129,7 +138,7 @@ export default function Students() {
                 <EnrollStudentForm
                   student={enrollingStudent}
                   onClose={() => {
-                    fetchEnrollments(enrollingStudent.id);
+                    fetchAllEnrollments();
                     setEnrollingStudent(null);
                   }}
                 />
@@ -184,10 +193,7 @@ export default function Students() {
                     </button>
                     <button
                       className="btn btn-sm btn-success"
-                      onClick={() => {
-                        fetchEnrollments(student.id);
-                        setEnrollingStudent(student);
-                      }}
+                      onClick={() => setEnrollingStudent(student)}
                     >
                       Enroll
                     </button>

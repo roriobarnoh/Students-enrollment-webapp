@@ -52,7 +52,7 @@ export default function Register() {
           />
         </div>
 
-        <div className="mb-3">
+        {/* <div className="mb-3">
           <label>Role</label>
           <select
             className="form-select"
@@ -62,7 +62,7 @@ export default function Register() {
             <option value="user">User</option>
             <option value="admin">Admin</option>
           </select>
-        </div>
+        </div> */}
 
         <button type="submit" className="btn btn-success">Register</button>
       </form>
